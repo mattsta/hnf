@@ -81,7 +81,8 @@ remove_yc({<<"html">>, Props, SubTags}, Config) ->
 remove_yc([{<<"head">>, Props, SubTags} | T], Config) ->
   [{<<"head">>, Props,
     [{<<"base">>,
-      [{<<"href">>, <<"http://news.ycombinator.com">>}], []} | SubTags]} |
+      [{<<"href">>, <<"http://news.ycombinator.com">>}], []} |
+       remove_yc(SubTags, Config)]} |
         remove_yc(T, Config)];
 remove_yc([{<<"tr">>, Props, SubTags} | T], Config) ->
   case remove_content(SubTags, Config) of
@@ -116,6 +117,8 @@ remove_yc([{<<"a">>, [{<<"href">>, <<"news">>} | Other], _LinkText} | T],
   [{<<"a">>,
    [{<<"href">>, ["http://diff.biz/?", Args]} | Other],
    <<"Hacked News">>} | remove_yc(T, Config)];
+remove_yc([{<<"title">>, _, _} | T], Config) ->
+  [{<<"title">>, [], <<"Hacked News">>} | remove_yc(T, Config)];
 remove_yc([{<<"a">>, _, [<<"login">>]} | T], Config) ->
   remove_yc(T, Config);
 remove_yc([{<<"a">>, [{<<"href">>, <<"/x?fnid=", F/binary>>} | Other],
