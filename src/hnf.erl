@@ -52,12 +52,12 @@ page(Req, WhichPage) ->
   Queries = Req:parse_qs(),
   case Queries of
     [] -> To = WhichPage ++ "?" ++
-               "remove=" ++ plus(?DEFAULT) ++ "&show-only-removed=no",
+               "remove=" ++ plus(?DEFAULT) ++ "&only-show-removed=no",
           Req:respond({301, [{"Location", To},
                       {"Content-Type", "text/html; charset=UTF-8"}], ""});
      _ -> Parsed = parsed_newsyc(WhichPage),
           Filter = proplists:get_value("remove", Queries, ?DEFAULT),
-          UseMatches = nice_invert("show-only-removed", Queries),
+          UseMatches = nice_invert("only-show-removed", Queries),
           Config = [{filter, Filter}, {invert, UseMatches}],
           Filtered = remove_yc(Parsed, Config),
           Body = mochiweb_html:to_html(Filtered),
@@ -133,7 +133,7 @@ remove_yc([H|T], Config) ->
 create_args(Config) ->
   {Remove, Filter} = props(Config),
   ShowFiltered = case Remove of true -> "no"; false -> "yes" end,
-  "remove=" ++ plus(Filter) ++ "&show-only-removed=" ++ ShowFiltered.
+  "remove=" ++ plus(Filter) ++ "&only-show-removed=" ++ ShowFiltered.
 
 props(Config) ->
   RemoveMatches = proplists:get_value(invert, Config, true),
