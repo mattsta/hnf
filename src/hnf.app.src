@@ -1,0 +1,13 @@
+{application, hnf,
+ [
+  {description, "hnf - Hacker News Filter"},
+  {vsn, "0.3"},
+  {modules, []},
+  {registered, [hnf_sup]},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, {hnf_app, []}},
+  {env, []}
+ ]}.
