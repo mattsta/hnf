@@ -1,10 +1,15 @@
 -module(hnf).
 
--compile(export_all).
+% exports for a stand-alone mochiweb-capable instance
+-export([start/0, front_page/2]).
+
+% erlwg callback
+-export([process_html_body/1]).
 
 start() ->
   application:start(hnf).
 
+% front_page/2 is only used in local mochiweb deploy mode
 front_page(A, Path) ->
   case string:tokens(Path, "/?") of
     []                          -> page(A);
@@ -16,25 +21,15 @@ front_page(A, Path) ->
   end.
 
 
+% default regex filter
+-define(DEFAULT, "(yc w|yc s|yc 2|gamif|yc-|20...yc|yc.20|crunch|onsh|"
+                  "37s|twitch)").
+
 %%%----------------------------------------------------------------------
 %%% pages
 %%%----------------------------------------------------------------------
 
-launch_treestore() ->
-  erlwg_sup:start_getter(hn, 60, fun hnf:process_html_body/1).
-
-process_html_body(death) -> [];
-process_html_body(Body) ->
-  mochiweb_html:parse(unicode:characters_to_binary(Body, utf8)).
-
--define(DEFAULT, "(yc w|yc s|yc 2|gamif|yc-|crunch|onsh)").
-
-% Convert pluses to spaces for putting the regex in URLs
-plus(What) when is_list(What) ->
-  lists:reverse(lists:foldl(fun(32, A) -> ["+" | A];
-                               (E, A) -> [E | A]
-                            end, [], What)).
-               
+% Now back to your regularly scheduled page handlers.
 x_page(Req) ->
   Queries = Req:parse_qs(),
   case Queries of
@@ -64,6 +59,20 @@ page(Req, WhichPage) ->
           Req:ok({"text/html; charset=UTF-8", [{"Server", "hnf-2.3/a"}], Body})
   end.
 
+%%%----------------------------------------------------------------------
+%%% cache helpers
+%%%----------------------------------------------------------------------
+
+process_html_body(death) -> [];
+process_html_body(Body) ->
+  mochiweb_html:parse(unicode:characters_to_binary(Body, utf8)).
+
+% Convert pluses to spaces for putting the regex in URLs
+plus(What) when is_list(What) ->
+  lists:reverse(lists:foldl(fun(32, A) -> ["+" | A];
+                               (E, A) -> [E | A]
+                            end, [], What)).
+
 nice_invert(Key, Queries) ->
   case proplists:get_value(Key, Queries, no) of
      "yes" -> false;
@@ -75,6 +84,10 @@ nice_invert(Key, Queries) ->
 
 parsed_newsyc(WhichPage) ->
   erlwg_server:get(hn, WhichPage, "http://news.ycombinator.com" ++ WhichPage).
+
+%%%----------------------------------------------------------------------
+%%% ehtml traversal
+%%%----------------------------------------------------------------------
 
 remove_yc({<<"html">>, Props, SubTags}, Config) ->
   {<<"html">>, Props, remove_yc(SubTags, Config)};
