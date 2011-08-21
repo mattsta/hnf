@@ -14,26 +14,19 @@ start_link() ->
 init([]) ->
   Erlwg = erlwg(),
   Trees = treestore(),
-  Web = web_specs(hnf_mochiweb, 8081),
 
-  Processes = [Erlwg, Trees, Web],
+  Processes = [Erlwg, Trees],
   Strategy = {one_for_one, 10, 10},
 
   {ok,
    {Strategy, lists:flatten(Processes)}}.
 
-web_specs(Mod, Port) ->
-  WebConfig = [{ip, {127, 0, 0, 1}}, {port, Port}],
-  {Mod,
-   {Mod, start, [WebConfig]},
-   permanent, 5000, worker, dynamic}.
-
 erlwg() ->
   {erlwg_sup,
    {erlwg_sup, start_link, []},
-   permanent, 5000, supervisor, dynamic}.
+   permanent, 5000, supervisor, [erlwg_sup]}.
 
 treestore() ->
   {erlwg_hn_treestore,
    {erlwg_server, start_link, [hn, 60, fun hnf:process_html_body/1]},
-   permanent, 5000, worker, dynamic}.
+   permanent, 5000, worker, [erlwg_hn_treestore]}.

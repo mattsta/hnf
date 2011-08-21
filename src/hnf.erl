@@ -1,68 +1,66 @@
 -module(hnf).
 
-% exports for a stand-alone mochiweb-capable instance
--export([start/0, front_page/2]).
+-export([start/0]).
 
 % erlwg callback
 -export([process_html_body/1]).
 
-start() ->
-  application:start(hnf).
-
-% front_page/2 is only used in local mochiweb deploy mode
-front_page(A, Path) ->
-  case string:tokens(Path, "/?") of
-    []                          -> page(A);
-    ["x"]                       -> x_page(A);
-    ["newest"]                  -> page(A, "/newest");
-    ["jerbs"]                   -> page(A, "/jobs");
-    ["ask"]                     -> page(A, "/ask");
-    _                           -> page(A)
-  end.
-
+% zog exports for paths
+-export([default_page/3, x/3, newest/3, jerbs/3, ask/3]).
 
 % default regex filter
 -define(DEFAULT, "(yc w|yc s|yc 2|gamif|yc-|20...yc|yc.20|crunch|onsh|"
                   "37s|twitch)").
 
 %%%----------------------------------------------------------------------
-%%% pages
+%%% starting
 %%%----------------------------------------------------------------------
+start() ->
+  application:start(hnf).
 
-% Now back to your regularly scheduled page handlers.
-x_page(Req) ->
-  Queries = Req:parse_qs(),
+%%%----------------------------------------------------------------------
+%%% zog_web functions for individual page requests
+%%%----------------------------------------------------------------------
+% default_page is what we use for / and anything else without a page function.
+% Path [] represents "/" on default page or the function-name-as-path
+% in any of the other functions.
+default_page('GET', [], Cxn) -> page(Cxn, "/");
+default_page('GET', _, Cxn) -> zog_page:temp_redirect(Cxn, "/").
+newest('GET', [], Cxn) -> page(Cxn, "/newest").
+jerbs('GET', [], Cxn) -> page(Cxn, "/jobs").
+ask('GET', [], Cxn) -> page(Cxn, "/ask").
+
+x('GET', [], Cxn) ->
+  Queries = Cxn:parse_qs(),
   case Queries of
-    [] -> page(Req);
+    [] -> zog_page:temp_redirect(Cxn, "/");
      _ -> case proplists:get_value("fnid", Queries, []) of
-            [] -> page(Req);
-             F -> page(Req, "/x?fnid=" ++ F)
+            [] -> zog_page:temp_redirect(Cxn, "/");
+             F -> page(Cxn, "/x?fnid=" ++ F)
           end
   end.
 
-page(Req) ->
-  page(Req, "/").
-
-page(Req, WhichPage) ->
-  Queries = Req:parse_qs(),
+%%%----------------------------------------------------------------------
+%%% page helpers
+%%%----------------------------------------------------------------------
+page(Cxn, WhichPage) ->
+  Queries = Cxn:parse_qs(),
   case Queries of
     [] -> To = WhichPage ++ "?" ++
                "remove=" ++ plus(?DEFAULT) ++ "&only-show-removed=no",
-          Req:respond({301, [{"Location", To},
-                      {"Content-Type", "text/html; charset=UTF-8"}], ""});
+          zog_page:temp_redirect(Cxn, To);
      _ -> Parsed = parsed_newsyc(WhichPage),
           Filter = proplists:get_value("remove", Queries, ?DEFAULT),
           UseMatches = nice_invert("only-show-removed", Queries),
           Config = [{filter, Filter}, {invert, UseMatches}],
           Filtered = remove_yc(Parsed, Config),
           Body = mochiweb_html:to_html(Filtered),
-          Req:ok({"text/html; charset=UTF-8", [{"Server", "hnf-2.3/a"}], Body})
+          zog_page:ok(Cxn, Body)
   end.
 
 %%%----------------------------------------------------------------------
 %%% cache helpers
 %%%----------------------------------------------------------------------
-
 process_html_body(death) -> [];
 process_html_body(Body) ->
   mochiweb_html:parse(unicode:characters_to_binary(Body, utf8)).
@@ -88,7 +86,6 @@ parsed_newsyc(WhichPage) ->
 %%%----------------------------------------------------------------------
 %%% ehtml traversal
 %%%----------------------------------------------------------------------
-
 remove_yc({<<"html">>, Props, SubTags}, Config) ->
   {<<"html">>, Props, remove_yc(SubTags, Config)};
 remove_yc([{<<"head">>, Props, SubTags} | T], Config) ->
