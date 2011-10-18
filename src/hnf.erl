@@ -9,7 +9,9 @@
 -export([default_page/3, x/3, newest/3, jerbs/3, ask/3]).
 
 % default regex filter
--define(DEFAULT, "(yc w|yc s|yc 2|gamif|yc-|20...yc|yc.20|crunch|onsh|"
+-define(DEFAULT, "(yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
+                  "yc[ws]|[ws][01]|"
+                  "drop|pars|irbn|"
                   "37s|twitch)").
 
 %%%----------------------------------------------------------------------
