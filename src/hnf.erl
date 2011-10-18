@@ -6,7 +6,7 @@
 -export([process_html_body/1]).
 
 % zog exports for paths
--export([default_page/3, x/3, newest/3, jerbs/3, ask/3]).
+-export([default_page/3, x/3, newest/3, news2/3, jerbs/3, ask/3]).
 
 % default regex filter
 -define(DEFAULT, "(yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
@@ -29,6 +29,7 @@ start() ->
 default_page('GET', [], Cxn) -> page(Cxn, "/");
 default_page('GET', _, Cxn) -> zog_page:temp_redirect(Cxn, "/").
 newest('GET', [], Cxn) -> page(Cxn, "/newest").
+news2('GET', [], Cxn) -> page(Cxn, "/news2").
 jerbs('GET', [], Cxn) -> page(Cxn, "/jobs").
 ask('GET', [], Cxn) -> page(Cxn, "/ask").
 
@@ -133,12 +134,18 @@ remove_yc([{<<"title">>, _, _} | T], Config) ->
   [{<<"title">>, [], <<"Hacked News">>} | remove_yc(T, Config)];
 remove_yc([{<<"a">>, _, [<<"login">>]} | T], Config) ->
   remove_yc(T, Config);
+remove_yc([{<<"a">>, [{<<"href">>, <<"news2">>} | Other],
+    [<<"More">>]} | T], Config) ->
+  Args = create_args(Config),
+  [{<<"a">>,
+   [{<<"href">>, ["http://diff.biz/news2?", Args]} | Other],
+   <<"more distractions »">>} | remove_yc(T, Config)];
 remove_yc([{<<"a">>, [{<<"href">>, <<"/x?fnid=", F/binary>>} | Other],
     [<<"More">>]} | T], Config) ->
   Args = create_args(Config),
   [{<<"a">>,
    [{<<"href">>, ["http://diff.biz/x?fnid=", F, "&", Args]} | Other],
-   <<"more distractions »">>} | remove_yc(T, Config)];
+   <<"even more distractions »">>} | remove_yc(T, Config)];
 remove_yc([{Tag, Props, SubTags} | T], Config) ->
   [{Tag, Props, remove_yc(SubTags, Config)} | remove_yc(T, Config)];
 remove_yc([], _) -> [];
