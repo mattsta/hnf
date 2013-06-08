@@ -9,9 +9,9 @@
 -export([default_page/3, x/3, newest/3, news2/3, jerbs/3, ask/3]).
 
 % default regex filter
--define(DEFAULT, "(yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
-                  "yc[ws]|[ws][01]|"
-                  "drop|pars|irbn|"
+-define(DEFAULT, "(pando|sopa|yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
+                  "yc[ws]|[ws][01]|xer|node.js|0me|"
+                  "drop|pars|irbn|esmat|lzu|"
                   "37s|twitch)").
 
 %%%----------------------------------------------------------------------
@@ -84,7 +84,7 @@ nice_invert(Key, Queries) ->
    end.
 
 parsed_newsyc(WhichPage) ->
-  erlwg_server:get(hn, WhichPage, "http://news.ycombinator.com" ++ WhichPage).
+  erlwg_server:get(hn, WhichPage, "https://news.ycombinator.com" ++ WhichPage).
 
 %%%----------------------------------------------------------------------
 %%% ehtml traversal
@@ -94,7 +94,7 @@ remove_yc({<<"html">>, Props, SubTags}, Config) ->
 remove_yc([{<<"head">>, Props, SubTags} | T], Config) ->
   [{<<"head">>, Props,
     [{<<"base">>,
-      [{<<"href">>, <<"http://news.ycombinator.com">>}], []} |
+      [{<<"href">>, <<"https://news.ycombinator.com">>}], []} |
        remove_yc(SubTags, Config)]} |
         remove_yc(T, Config)];
 remove_yc([{<<"tr">>, Props, SubTags} | T], Config) ->
