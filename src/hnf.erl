@@ -9,9 +9,9 @@
 -export([default_page/3, x/3, newest/3, news2/3, jerbs/3, ask/3]).
 
 % default regex filter
--define(DEFAULT, "(pando|sopa|yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
+-define(DEFAULT, "(bitcoin|pando|yc.[ws2]|gamif|yc-|20...yc|yc.20|crunch|onsh|"
                   "yc[ws]|[ws][01]|xer|node.js|0me|"
-                  "drop|pars|irbn|esmat|lzu|"
+                  "mysql|drop|pars|irbn|esmat|lzu|"
                   "37s|twitch)").
 
 %%%----------------------------------------------------------------------
